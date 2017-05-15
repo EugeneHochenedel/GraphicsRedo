@@ -22,9 +22,21 @@ public:
 	glm::mat4 getProjectionView();
 
 private:
+	void updateProjectionViewTransform();
 	glm::mat4 worldTransform;
 	glm::mat4 viewTransform;
 	glm::mat4 projectionTransform;
 	glm::mat4 projectionViewTransform;
-	void updateProjectionViewTransform();
+	
+};
+
+class FlyCamera : public Camera
+{
+public:
+	void update(float deltaTime) override;
+	void setSpeed(float speed);
+
+private:
+	float speed;
+	glm::vec3 up;
 };
