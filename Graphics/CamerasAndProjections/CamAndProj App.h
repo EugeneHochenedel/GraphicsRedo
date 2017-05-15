@@ -9,6 +9,7 @@
 #include "src\Gizmos.h"
 #include <glm.hpp>
 #include <ext.hpp>
+#include "Camera.h"
 
 class Application
 {
@@ -30,7 +31,8 @@ public:
 
 private:
 	GLFWwindow* screen;
-	glm::mat4 view, projection, Star, Exoplanet, Satellite, Rings;
+	FlyCamera myCamera;
+	glm::mat4 Star, Exoplanet, Satellite, Rings;
 
 	float rotAngle, previousTime, currentTime, deltaTime;
 	glm::vec4 black, grey, red, brown, yellow, green, white;

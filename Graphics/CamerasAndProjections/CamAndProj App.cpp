@@ -1,5 +1,4 @@
 #include "CamAndProj App.h"
-#include "Camera.h"
 
 CamAndProjApplication::CamAndProjApplication()
 {
@@ -44,9 +43,10 @@ bool CamAndProjApplication::startup()
 
 	Gizmos::create();
 	
-	view = glm::lookAt(glm::vec3(10), glm::vec3(0), glm::vec3(0, 1, 0));
-	projection = glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
-	//projection = glm::ortho(-10.0f, 10.0f, 10.0f, -10.0f, 1.0f, 1000.0f);
+	myCamera.setPerspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
+	myCamera.setLookAt(glm::vec3(10), glm::vec3(0), glm::vec3(0, 1, 0));
+	
+	myCamera.setSpeed(10.0f);
 
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
@@ -58,11 +58,9 @@ bool CamAndProjApplication::startup()
 bool CamAndProjApplication::update()
 {
 	currentTime = (float)glfwGetTime();
-	previousTime = currentTime;
 	deltaTime = currentTime - previousTime;
-	glm::mat4 camTransform = glm::inverse(view);
-	camTransform = camTransform * glm::translate(glm::vec3(view[3][0], view[3][1], view[3][2] * deltaTime));
-	view = glm::inverse(camTransform);
+	previousTime = currentTime;
+	myCamera.update(deltaTime, screen);
 
 	while (glfwWindowShouldClose(screen) == false && glfwGetKey(screen, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
@@ -97,7 +95,7 @@ void CamAndProjApplication::draw()
 		Gizmos::addLine(glm::vec3(10, 0, -10 + i), glm::vec3(-10, 0, -10 + i), i == 0 ? white : black);
 	}
 
-	Gizmos::draw(projection * view);
+	Gizmos::draw(myCamera.getProjectionView());
 
 	glfwSwapBuffers(screen);
 	glfwPollEvents();
