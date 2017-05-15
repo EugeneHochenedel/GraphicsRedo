@@ -1,5 +1,8 @@
 #pragma once
 
+#define GLM_SWIZZLE
+#define GLM_FORCE_PURE
+
 #include <iostream>
 #include "src\gl_core_4_4.h"
 #include <GLFW\glfw3.h>

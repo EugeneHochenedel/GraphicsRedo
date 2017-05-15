@@ -9,8 +9,6 @@
 #include "src\Gizmos.h"
 #include <glm.hpp>
 #include <ext.hpp>
-#include <gtc\matrix_transform.hpp>
-#include <gtx\transform.hpp>
 
 class Application
 {
@@ -33,7 +31,6 @@ public:
 private:
 	GLFWwindow* screen;
 	glm::mat4 view, projection, Star, Exoplanet, Satellite, Rings;
-	glm::vec3 planetTrans, satTrans;
 
 	float rotAngle, previousTime, currentTime, deltaTime;
 	glm::vec4 black, grey, red, brown, yellow, green, white;

@@ -4,9 +4,6 @@
 CamAndProjApplication::CamAndProjApplication()
 {
 	rotAngle = 0;
-	previousTime = 0;
-	currentTime = 0;
-	deltaTime = 0;
 
 	black = glm::vec4(glm::vec3(0), 1);
 	grey = glm::vec4(glm::vec3(0.25f), 1);
@@ -24,7 +21,7 @@ bool CamAndProjApplication::startup()
 		return false;
 	}
 
-	screen = glfwCreateWindow(1280, 720, "Tntro to OpenGL", nullptr, nullptr);
+	screen = glfwCreateWindow(1280, 720, "Cameras and Projections", nullptr, nullptr);
 
 	if (screen == nullptr)
 	{
@@ -62,9 +59,9 @@ bool CamAndProjApplication::update()
 {
 	currentTime = (float)glfwGetTime();
 	previousTime = currentTime;
-	deltaTime += currentTime - previousTime;
+	deltaTime = currentTime - previousTime;
 	glm::mat4 camTransform = glm::inverse(view);
-	camTransform = camTransform * glm::translate(glm::vec3(0, 0, 30 * deltaTime));
+	camTransform = camTransform * glm::translate(glm::vec3(view[3][0], view[3][1], view[3][2] * deltaTime));
 	view = glm::inverse(camTransform);
 
 	while (glfwWindowShouldClose(screen) == false && glfwGetKey(screen, GLFW_KEY_ESCAPE) != GLFW_PRESS)
