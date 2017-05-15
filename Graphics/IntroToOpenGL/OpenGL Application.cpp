@@ -20,7 +20,7 @@ bool OpenGLApplication::startup()
 		return false;
 	}
 
-	screen = glfwCreateWindow(1280, 720, "Tntro to OpenGL", nullptr, nullptr);
+	screen = glfwCreateWindow(1280, 720, "Intro to OpenGL", nullptr, nullptr);
 
 	if (screen == nullptr)
 	{
