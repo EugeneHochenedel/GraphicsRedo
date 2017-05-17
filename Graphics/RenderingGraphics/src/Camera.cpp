@@ -97,6 +97,11 @@ void FlyCamera::update(float deltaTime, GLFWwindow* window)
 			rotation[2][1] = sin(rotated);
 			rotation[2][2] = cos(rotated);
 		}
+		rotateCamera(rotation);
+	}
+
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	{
 		if (Xoffset > 1 || Xoffset < 1)
 		{
 			float rotated = Xoffset;
