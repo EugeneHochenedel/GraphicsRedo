@@ -39,17 +39,19 @@ public:
 	void draw() override;
 	void shutdown() override;
 
-	void generateGrid(const int rows, const int cols);
+	void generateGrid(unsigned int rows, unsigned int cols);
 
 private:
 	GLFWwindow* screen;
-	glm::mat4 view, projection, m_projectionViewMatrix;
+
 	FlyCamera myCamera;
 
 	unsigned int m_programID;
-	int auiIndices;
+	unsigned int *auiIndices;
 
-	unsigned int m_VAO, m_VBO, m_IBO;
+	unsigned int m_VAO;
+	unsigned int m_VBO;
+	unsigned int m_IBO;
 
 	float previousTime, currentTime, deltaTime;
 

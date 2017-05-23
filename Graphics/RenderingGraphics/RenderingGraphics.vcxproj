@@ -133,6 +133,10 @@
     <ClCompile Include="src\Gizmos.cpp" />
     <ClCompile Include="src\gl_core_4_4.c" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="fsSource.txt" />
+    <Text Include="vsSource.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

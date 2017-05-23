@@ -78,10 +78,10 @@ bool Renderer::startup()
 
 	myCamera.setSpeed(10.0f);
 
+	glClearColor(0.25f, 0.25f, 0.25f, 1);
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.25f, 0.25f, 0.25f, 1);
-
+	
 	//Vertex Shader
 	const char* vsSource = "#version 410\n \
 							layout(location=0) in vec4 Position; \
@@ -130,8 +130,6 @@ bool Renderer::startup()
 		return false;
 	}
 
-	generateGrid(21, 21);
-
 	glDeleteShader(fragmentShader);
 	glDeleteShader(vertexShader);
 
@@ -162,15 +160,13 @@ void Renderer::draw()
 		Gizmos::addLine(glm::vec3(10, 0, -10 + i), glm::vec3(-10, 0, -10 + i), i == 0 ? white : black);
 	}*/
 
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	glUseProgram(m_programID);
-	unsigned int projectionViewUniform = glGetUniformLocation(m_programID, "ProjectionView");
+	int projectionViewUniform = glGetUniformLocation(m_programID, "ProjectionView");
 	glUniformMatrix4fv(projectionViewUniform, 1, GL_FALSE, glm::value_ptr(myCamera.getProjectionView()));
-
-	glBindVertexArray(m_VAO);
-	glDrawElements(GL_TRIANGLES, auiIndices, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
+	generateGrid(21, 21);
 	
 	Gizmos::draw(myCamera.getProjectionView());
 
@@ -187,10 +183,9 @@ void Renderer::shutdown()
 }
 
 //function to create a grid
-void Renderer::generateGrid(const int rows, const int cols)
+void Renderer::generateGrid(unsigned int rows, unsigned int cols)
 {
 	Vertex* aoVertices = new Vertex[rows * cols];
-	
 	
 	//Populates the vertices array
 	for (unsigned int r = 0; r < rows; r++)
@@ -199,30 +194,53 @@ void Renderer::generateGrid(const int rows, const int cols)
 		{
 			aoVertices[r * cols + c].position = glm::vec4((float)c, 0, (float)r, 1);
 
-			//Create some arbitrary colour based off something
-			//That might not be related to tiling a texture
 			glm::vec3 colour = glm::vec3(sinf((c / (float)(cols - 1)) * (r / (float)(rows - 1))));
-			aoVertices[r*cols + c].colour = glm::vec4(colour, 1);
+			
+			if (aoVertices[r * cols + c].position.x <= cols * 0.5f && aoVertices[r * cols + c].position.z <= rows * 0.5f)
+			{
+				colour.x += colour.x * 3.0f;
+				aoVertices[r * cols + c].colour = glm::vec4(colour, 1);
+			}
+
+			else if (aoVertices[r * cols + c].position.x <= cols * 0.5f && aoVertices[r * cols + c].position.z >= rows * 0.5f) 
+			{
+				colour.y += colour.y * 3.0f;
+				aoVertices[r * cols + c].colour = glm::vec4(colour, 1);
+			}
+
+			else if (aoVertices[r * cols + c].position.x >= cols * 0.5f && aoVertices[r * cols + c].position.z >= rows * 0.5f)
+			{
+				colour.z += colour.z * 3.0f;
+				aoVertices[r * cols + c].colour = glm::vec4(colour, 0);
+			}
+			
+			else if (aoVertices[r * cols + c].position.x >= cols * 0.5f && aoVertices[r * cols + c].position.z <= rows * 0.5f)
+			{
+				colour.x += colour.x * 1.5f;
+				colour.y += colour.y * 1.5f;
+				colour.z += colour.z * 1.5f;
+				aoVertices[r * cols + c].colour = glm::vec4(colour, 1);
+			}
 		}
 	}
 
-	/*unsigned int**/ auiIndices = (rows - 1) * (cols - 1) * 6;
-	unsigned int* aIndices = new unsigned int[auiIndices];
+	unsigned int size = (rows - 1) * (cols - 1) * 6;
+	auiIndices = new unsigned int[size];
 
-	unsigned int index = 0;
+	int index = 0;
 	for (unsigned int r = 0; r < (rows - 1); r++)
 	{
 		for (unsigned int c = 0; c < (cols - 1); c++)
 		{
 			//Triangle 1
-			aIndices[index++] = r * cols + c;
-			aIndices[index++] = (r + 1) * cols + c;
-			aIndices[index++] = (r + 1) * cols + (c + 1);
+			auiIndices[index++] = r * cols + c;
+			auiIndices[index++] = (r + 1) * cols + c;
+			auiIndices[index++] = (r + 1) * cols + (c + 1);
 
 			//Triangle 2
-			aIndices[index++] = r * cols + c;
-			aIndices[index++] = (r + 1) * cols + (c + 1);
-			aIndices[index++] = r * cols + (c + 1);
+			auiIndices[index++] = r * cols + c;
+			auiIndices[index++] = (r + 1) * cols + (c + 1);
+			auiIndices[index++] = r * cols + (c + 1);
 		}
 	}
 	//Generate our GL Buffers
@@ -234,30 +252,27 @@ void Renderer::generateGrid(const int rows, const int cols)
 	
 	glBindVertexArray(m_VAO);
 
-
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 	glBufferData(GL_ARRAY_BUFFER, (rows * cols) * sizeof(Vertex), aoVertices, GL_STATIC_DRAW);
 	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, auiIndices * sizeof(unsigned int), aIndices, GL_STATIC_DRAW);
-
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
 
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(glm::vec4)));
-
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(glm::vec4)));
 	
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size * sizeof(unsigned int), auiIndices, GL_STATIC_DRAW);
 
-	glDrawElements(GL_TRIANGLES, auiIndices, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, nullptr);
 
 	glBindVertexArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	delete[] aoVertices;
-	delete[] aIndices;
+	delete[] auiIndices;
 }
