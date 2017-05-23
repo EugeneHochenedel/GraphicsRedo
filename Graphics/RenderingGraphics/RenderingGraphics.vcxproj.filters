@@ -46,7 +46,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="fsSource.txt" />
-    <Text Include="vsSource.txt" />
+    <None Include="vsSource.vert" />
+    <None Include="fsSource.frag" />
   </ItemGroup>
 </Project>

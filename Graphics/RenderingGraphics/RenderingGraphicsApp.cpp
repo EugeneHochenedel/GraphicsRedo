@@ -83,20 +83,14 @@ bool Renderer::startup()
 	glEnable(GL_DEPTH_TEST);
 	
 	//Vertex Shader
-	const char* vsSource = "#version 410\n \
-							layout(location=0) in vec4 Position; \
-							layout(location=1) in vec4 Colour; \
-							out vec4 vColour; \
-							uniform mat4 ProjectionView; \
-							uniform float time; \
-							uniform float heightScale; \
-							void main() { vec4 P = Position; vColour = Colour; P.y += sin( time * Position.x ) * heightScale; gl_Position = ProjectionView * P; }";
+	const char* vsSource;
+	std::string vertShader = ReadIn("vsSource.vert");
+	vsSource = vertShader.c_str();
 
 	//Fragment Shader
-	const char* fsSource = "#version 410\n \
-							in vec4 vColour; \
-							out vec4 FragColour; \
-							void main() { FragColour = vColour; }";
+	const char* fsSource;
+	std::string fragShader = ReadIn("fsSource.frag");
+	fsSource = fragShader.c_str();
 
 	int success = GL_FALSE;
 	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -166,7 +160,9 @@ void Renderer::draw()
 	int projectionViewUniform = glGetUniformLocation(m_programID, "ProjectionView");
 	glUniformMatrix4fv(projectionViewUniform, 1, GL_FALSE, glm::value_ptr(myCamera.getProjectionView()));
 	
-	generateGrid(21, 21);
+	//generateGrid(21, 21);
+	//generatePlane();
+	generateCube();
 	
 	Gizmos::draw(myCamera.getProjectionView());
 
@@ -182,9 +178,27 @@ void Renderer::shutdown()
 	glfwTerminate();
 }
 
+std::string Renderer::ReadIn(std::string fileName)
+{
+	std::string info;
+	std::string container;
+	std::ifstream file(fileName);
+
+	if (file.is_open())
+	{
+		while (std::getline(file, info))
+		{
+			container += info + '\n';
+		}
+		file.close();
+	}
+	return container;
+}
+
 //function to create a grid
 void Renderer::generateGrid(unsigned int rows, unsigned int cols)
 {
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	Vertex* aoVertices = new Vertex[rows * cols];
 	
 	//Populates the vertices array
@@ -271,8 +285,104 @@ void Renderer::generateGrid(unsigned int rows, unsigned int cols)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
 
 	delete[] aoVertices;
 	delete[] auiIndices;
+}
+
+void Renderer::generatePlane()
+{
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	
+	Vertex aoPoints[4];
+	unsigned int indices[4] = { 0, 1, 2, 3 };
+
+	aoPoints[0].position = glm::vec4(4, 0, 4, 1);
+	aoPoints[1].position = glm::vec4(-4, 0, 4, 1);
+	aoPoints[2].position = glm::vec4(4, 0, -4, 1);
+	aoPoints[3].position = glm::vec4(-4, 0, -4, 1);
+
+	aoPoints[0].colour = glm::vec4(1, 0, 0, 1);
+	aoPoints[1].colour = glm::vec4(0, 1, 0, 1);
+	aoPoints[2].colour = glm::vec4(0, 0, 1, 1);
+	aoPoints[3].colour = glm::vec4(1, 1, 1, 1);
+
+	glGenBuffers(1, &m_VBO);
+	glGenBuffers(1, &m_IBO);
+
+	glGenVertexArrays(1, &m_VAO);
+
+	glBindVertexArray(m_VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), aoPoints, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(glm::vec4)));
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 4 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
+	glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_INT, nullptr);
+
+	glBindVertexArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void Renderer::generateCube()
+{
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	Vertex aoPoints[8];
+	unsigned int indices[17] = { 0, 1, 2, 3, 6, 7, 4, 5, 0, 1, 5, 3, 7, 6, 4, 2, 0 };
+
+	aoPoints[0].position = glm::vec4(4, 0, 4, 1);
+	aoPoints[1].position = glm::vec4(-4, 0, 4, 1);
+	aoPoints[2].position = glm::vec4(4, 0, -4, 1);
+	aoPoints[3].position = glm::vec4(-4, 0, -4, 1);
+	aoPoints[4].position = glm::vec4(4, 5, 4, 1);
+	aoPoints[5].position = glm::vec4(-4, 5, 4, 1);
+	aoPoints[6].position = glm::vec4(4, 5, -4, 1);
+	aoPoints[7].position = glm::vec4(-4, 5, -4, 1);
+
+	aoPoints[0].colour = glm::vec4(1, 0, 0, 1);
+	aoPoints[1].colour = glm::vec4(0, 1, 0, 1);
+	aoPoints[2].colour = glm::vec4(0, 0, 1, 1);
+	aoPoints[3].colour = glm::vec4(1, 1, 1, 1);
+	aoPoints[4].colour = glm::vec4(0.5f, 0, 0, 1);
+	aoPoints[5].colour = glm::vec4(0, 0.5f, 0, 1);
+	aoPoints[6].colour = glm::vec4(0, 0, 0.5f, 1);
+	aoPoints[7].colour = glm::vec4(0.5f, 0.5f, 0.5f, 1);
+
+	glGenBuffers(1, &m_VBO);
+	glGenBuffers(1, &m_IBO);
+
+	glGenVertexArrays(1, &m_VAO);
+
+	glBindVertexArray(m_VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(Vertex), aoPoints, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(glm::vec4)));
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 17 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
+	glDrawElements(GL_TRIANGLE_STRIP, 17, GL_UNSIGNED_INT, nullptr);
+
+	glBindVertexArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }

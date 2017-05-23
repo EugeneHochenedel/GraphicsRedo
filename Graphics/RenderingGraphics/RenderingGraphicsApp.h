@@ -4,15 +4,13 @@
 #define GLM_FORCE_PURE
 
 #include <iostream>
-//#include <math.h>
-//#include <vector>
 #include "src\gl_core_4_4.h"
 #include <GLFW\glfw3.h>
 #include "src\Gizmos.h"
 #include <glm.hpp>
 #include <ext.hpp>
-//#include <string>
-//#include <fstream>
+#include <string>
+#include <fstream>
 #include "src\Camera.h"
 
 struct Vertex
@@ -40,6 +38,9 @@ public:
 	void shutdown() override;
 
 	void generateGrid(unsigned int rows, unsigned int cols);
+	std::string ReadIn(std::string);
+	void generatePlane();
+	void generateCube();
 
 private:
 	GLFWwindow* screen;
