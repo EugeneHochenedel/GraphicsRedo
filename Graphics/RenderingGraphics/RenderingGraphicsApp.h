@@ -41,6 +41,7 @@ public:
 	std::string ReadIn(std::string);
 	void generatePlane();
 	void generateCube();
+	void generateHalfCirc(unsigned int points, unsigned int radius, unsigned int divisions);
 
 private:
 	GLFWwindow* screen;

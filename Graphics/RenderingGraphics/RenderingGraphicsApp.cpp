@@ -159,7 +159,7 @@ void Renderer::draw()
 	glUseProgram(m_programID);
 	int projectionViewUniform = glGetUniformLocation(m_programID, "ProjectionView");
 	glUniformMatrix4fv(projectionViewUniform, 1, GL_FALSE, glm::value_ptr(myCamera.getProjectionView()));
-	
+
 	//generateGrid(21, 21);
 	//generatePlane();
 	generateCube();
@@ -209,32 +209,7 @@ void Renderer::generateGrid(unsigned int rows, unsigned int cols)
 			aoVertices[r * cols + c].position = glm::vec4((float)c, 0, (float)r, 1);
 
 			glm::vec3 colour = glm::vec3(sinf((c / (float)(cols - 1)) * (r / (float)(rows - 1))));
-			
-			if (aoVertices[r * cols + c].position.x <= cols * 0.5f && aoVertices[r * cols + c].position.z <= rows * 0.5f)
-			{
-				colour.x += colour.x * 3.0f;
-				aoVertices[r * cols + c].colour = glm::vec4(colour, 1);
-			}
-
-			else if (aoVertices[r * cols + c].position.x <= cols * 0.5f && aoVertices[r * cols + c].position.z >= rows * 0.5f) 
-			{
-				colour.y += colour.y * 3.0f;
-				aoVertices[r * cols + c].colour = glm::vec4(colour, 1);
-			}
-
-			else if (aoVertices[r * cols + c].position.x >= cols * 0.5f && aoVertices[r * cols + c].position.z >= rows * 0.5f)
-			{
-				colour.z += colour.z * 3.0f;
-				aoVertices[r * cols + c].colour = glm::vec4(colour, 0);
-			}
-			
-			else if (aoVertices[r * cols + c].position.x >= cols * 0.5f && aoVertices[r * cols + c].position.z <= rows * 0.5f)
-			{
-				colour.x += colour.x * 1.5f;
-				colour.y += colour.y * 1.5f;
-				colour.z += colour.z * 1.5f;
-				aoVertices[r * cols + c].colour = glm::vec4(colour, 1);
-			}
+			aoVertices[r * cols + c].colour = glm::vec4(colour, 1);
 		}
 	}
 
@@ -284,8 +259,6 @@ void Renderer::generateGrid(unsigned int rows, unsigned int cols)
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	
 
 	delete[] aoVertices;
 	delete[] auiIndices;
@@ -385,4 +358,12 @@ void Renderer::generateCube()
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void Renderer::generateHalfCirc(unsigned int points, unsigned int radius, unsigned int divisions)
+{
+	glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+
+	Vertex* halfCircleVerts = new Vertex[points];
+
 }
