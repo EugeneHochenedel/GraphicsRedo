@@ -162,7 +162,8 @@ void Renderer::draw()
 
 	//generateGrid(21, 21);
 	//generatePlane();
-	generateCube();
+	//generateCube();
+	generateHalfCircle(20, 3);
 	
 	Gizmos::draw(myCamera.getProjectionView());
 
@@ -360,10 +361,57 @@ void Renderer::generateCube()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Renderer::generateHalfCirc(unsigned int points, unsigned int radius, unsigned int divisions)
+void Renderer::generateHalfCircle(unsigned int points, unsigned int radius)
 {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	Vertex* halfCircleVerts = new Vertex[points];
+	int parts = points - 1;
 
+	Vertex* aoVertices = new Vertex[points * parts];
+
+	for (int i = 0; i <= points; i++)
+	{
+		double angle = glm::pi<float>() * i / parts;
+		double X = cosf(angle) * radius;
+		double Y = sinf(angle) * radius;
+		
+		aoVertices[i].position = glm::vec4(X, Y, 0, 1);
+	}
+
+	auiIndices = new unsigned int [2 * (points * parts)];
+	unsigned int size = 2 * (points * parts);
+
+	int count = 0;
+	for (unsigned int i = 0; i < parts; i++)
+	{
+		for (unsigned int j = 0; j < points; j++)
+		{
+			auiIndices[count++] = i * points + j;
+		}
+	}
+
+	glGenBuffers(1, &m_VBO);
+	glGenBuffers(1, &m_IBO);
+	glGenVertexArrays(1, &m_VAO);
+
+	glBindVertexArray(m_VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	glBufferData(GL_ARRAY_BUFFER, (points * parts) * sizeof(Vertex), aoVertices, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, parts * sizeof(unsigned int), auiIndices, GL_STATIC_DRAW);
+
+	glDrawElements(GL_TRIANGLE_FAN, size, GL_UNSIGNED_INT, 0);
+
+	glBindVertexArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
