@@ -12,6 +12,7 @@
 #include <string>
 #include <fstream>
 #include "src\Camera.h"
+#include <vector>
 
 struct Vertex
 {
@@ -37,11 +38,13 @@ public:
 	void draw() override;
 	void shutdown() override;
 
-	void generateGrid(unsigned int rows, unsigned int cols);
+	void generateGrid(unsigned int, unsigned int);
 	std::string ReadIn(std::string);
 	void generatePlane();
 	void generateCube();
-	void generateHalfCircle(unsigned int points, unsigned int radius);
+	void generateHalfCircle(unsigned int, unsigned int, unsigned int);
+	void generateSphere(unsigned int, unsigned int, unsigned int);
+	void drawSphere();
 
 private:
 	GLFWwindow* screen;
@@ -55,7 +58,10 @@ private:
 	unsigned int m_VBO;
 	unsigned int m_IBO;
 
+	unsigned int indexCount;
+
 	float previousTime, currentTime, deltaTime;
+	float PI = glm::pi<float>();
 
 	glm::vec4 black, grey, red, brown, yellow, green, white;
 };
