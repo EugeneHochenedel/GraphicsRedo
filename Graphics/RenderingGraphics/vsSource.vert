@@ -6,11 +6,11 @@ layout(location = 1) in vec4 Colour;
 out vec4 vColour;
 
 uniform mat4 ProjectionView;
-uniform float time;
+uniform float Time;
 
 void main()
 {
-	vec4 P = Position;
 	vColour = Colour;
-	gl_Position = ProjectionView * P;
+
+	gl_Position = ProjectionView * Position;
 }

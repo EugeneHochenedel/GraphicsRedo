@@ -43,7 +43,7 @@ public:
 	void generatePlane();
 	void generateCube();
 	void generateHalfCircle(unsigned int, unsigned int, unsigned int);
-	void generateSphere(unsigned int, unsigned int, unsigned int);
+	void generateSphere(unsigned int, unsigned int, float);
 	void drawSphere();
 
 private:
@@ -58,9 +58,10 @@ private:
 	unsigned int m_VBO;
 	unsigned int m_IBO;
 
-	unsigned int indexCount;
+	int indexCount;
+	std::vector<unsigned int> indexHolder;
 
-	float previousTime, currentTime, deltaTime;
+	float previousTime, currentTime, deltaTime, m_time;
 	float PI = glm::pi<float>();
 
 	glm::vec4 black, grey, red, brown, yellow, green, white;

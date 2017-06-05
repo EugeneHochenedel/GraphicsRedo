@@ -35,8 +35,12 @@ Renderer::Renderer()
 	glClearColor(0.25f, 0.25f, 0.25f, 1);
 }
 
+//unsigned int indexCount;
+
 bool Renderer::startup()
 {
+	generateSphere(25, 25, 5);
+
 	//Vertex Shader
 	const char* vsSource;
 	std::string vertShader = ReadIn("vsSource.vert");
@@ -82,8 +86,6 @@ bool Renderer::startup()
 	glDeleteShader(fragmentShader);
 	glDeleteShader(vertexShader);
 	
-	generateSphere(10, 10, 3);
-
 	return true;
 }
 
@@ -105,17 +107,18 @@ bool Renderer::update()
 
 void Renderer::draw()
 {
-	/*for (int i = 0; i < 21; i++)
-	{
-		Gizmos::addLine(glm::vec3(-10 + i, 0, 10), glm::vec3(-10 + i, 0, -10), i == 0 ? white : black);
-		Gizmos::addLine(glm::vec3(10, 0, -10 + i), glm::vec3(-10, 0, -10 + i), i == 0 ? white : black);
-	}*/
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	//m_time = glfwGetTime();
+
 	glUseProgram(m_programID);
+	
 	int projectionViewUniform = glGetUniformLocation(m_programID, "ProjectionView");
+	//GLint loc = glGetUniformLocation(m_programID, "Time");
 	glUniformMatrix4fv(projectionViewUniform, 1, GL_FALSE, glm::value_ptr(myCamera.getProjectionView()));
+	//glUniform1f(loc, m_time);
 
 	//generateGrid(21, 21);
 	//generatePlane();
@@ -132,6 +135,11 @@ void Renderer::draw()
 
 void Renderer::shutdown()
 {
+	glDeleteProgram(m_programID);
+	glDeleteVertexArrays(1, &m_VAO);
+	glDeleteBuffers(1, &m_VBO);
+	glDeleteBuffers(1, &m_IBO);
+
 	Gizmos::destroy();
 
 	glfwDestroyWindow(screen);
@@ -327,11 +335,11 @@ void Renderer::generateHalfCircle(unsigned int points, unsigned int segments, un
 
 	Vertex* aoVertices = new Vertex[points * segments];
 
-	for (int i = 0; i <= points; i++)
+	for (unsigned int i = 0; i <= points; i++)
 	{
 		double angle = PI * i / segments;
-		double X = cosf(angle) * radius;
-		double Y = sinf(angle) * radius;
+		double X = cos(angle) * radius;
+		double Y = sin(angle) * radius;
 		
 		aoVertices[i].position = glm::vec4(X, Y, 0, 1);
 	}
@@ -377,94 +385,90 @@ void Renderer::generateHalfCircle(unsigned int points, unsigned int segments, un
 	delete[] auiIndices;
 }
 
-void Renderer::generateSphere(unsigned int points, unsigned int divisions, unsigned int radius)
+void Renderer::generateSphere(unsigned int pointCount, unsigned int partCount, float radius)
 {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	int segments = points - 1;
-	int vertCount = 0;
+	unsigned int size = pointCount * partCount;
+	Vertex* sphereVerts = new Vertex[size];
+	unsigned int* sphereIndices;
 	
-	Vertex* aoVertices = new Vertex[points * segments];
-	Vertex* spVertices = new Vertex[points * divisions];
-	
-	//std::vector<glm::vec4> pointPush;
+	//Generates the vertices of a semicircle
+	int sectionCount = pointCount - 1;
+	Vertex* points = new Vertex[pointCount];
 
-	for (int i = 0; i <= points; i++)
+	for (unsigned int i = 0; i < pointCount; i++)
 	{
-		double angle = PI * (float)i / (float)segments;
-		double X = sinf(angle) * radius;
-		double Y = cosf(angle) * radius;
+		float theta = PI * (float)i / (float)sectionCount;
+		float newX = radius * sin(theta);
+		float newY = radius * cos(theta);
 
-		//pointPush.push_back(glm::vec4(X, Y, 0, 1));
-		aoVertices[i].position = glm::vec4(X, Y, 0, 1);
+		points[i].position = glm::vec4(newX, newY, 0, 1);
 	}
 
-	//std::vector<glm::vec4> vertsPush;
-
-	for (int i = 0; i < divisions; i++)
+	//Generates the vertticies of the sphere based on those of the semicircle
+	unsigned int counter = 0;
+	Vertex* partVerts = new Vertex[pointCount * partCount];
+	
+	for (unsigned int i = 0; i < partCount; i++)
 	{
-		float phi = 2 * PI * (((float)i / (float)divisions));
-		for (int j = 0; j < points; j++, vertCount++)
+		float phi = 2 * PI * ((float)i / (float)partCount);
+		for (unsigned int j = 0; j < pointCount; j++, counter++)
 		{
-			float X = aoVertices[j].position.x * cosf(phi) + aoVertices[j].position.z * sinf(phi);
-			float Y = aoVertices[j].position.y/* * cosf(phi) - aoVertices[j].position.z * sinf(phi)*/;
-			float Z = aoVertices[j].position.z * cosf(phi) - aoVertices[j].position.x * sinf(phi);
+			float newX = points[j].position.x * cos(phi) + points[j].position.z * sin(phi);
+			float newY = points[j].position.y;
+			float newZ = points[j].position.z * cos(phi) - points[j].position.x * sin(phi);
 
-			//vertsPush.push_back(glm::vec4(X, Y, Z, 1));
-			spVertices[vertCount].position = glm::vec4(X, Y, Z, 1);
+			partVerts[counter].position = glm::vec4(newX, newY, newZ, 1);
+		}
+	}
+	sphereVerts = partVerts;
+
+	//Generates the indices of the sphere
+	unsigned int* indices = new unsigned int[2 * (pointCount * (partCount))];
+	indexCount = 2 * (pointCount * (partCount));
+
+	for (unsigned int i = 0; i < partCount; i++)
+	{
+		unsigned int start = i * pointCount;
+		for (unsigned int j = 0; j < pointCount; j++)
+		{
+			unsigned int botR = ((start + pointCount + j) % (pointCount * partCount));
+			unsigned int botL = ((start + j) % (pointCount * partCount));
+			indexHolder.push_back(botL);
+			indexHolder.push_back(botR);
 		}
 	}
 
-	//std::vector<unsigned int> indices;
-
-	indexCount = points * divisions;
-	auiIndices = new unsigned int[points * divisions];
-
-	for (unsigned int i = 0; i < divisions; i++)
+	for (unsigned int i = 0; i < indexHolder.size(); i++)
 	{
-		//unsigned int start = i * points;
-		for (unsigned int j = 0; j < points; j++)
-		{
-			/*unsigned int botR = (start + points + j);
-			unsigned int botL = (start + j);
-			indices.push_back(botL);
-			indices.push_back(botR);*/
-
-			auiIndices[i * points + j] = i * points + j;
-		}
-		//indices.push_back(0xFFFF);
+		indices[i] = indexHolder[i];
 	}
+	sphereIndices = indices;
 
+	
 	glGenBuffers(1, &m_VBO);
 	glGenBuffers(1, &m_IBO);
+
 	glGenVertexArrays(1, &m_VAO);
 
 	glBindVertexArray(m_VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-	glBufferData(GL_ARRAY_BUFFER, (points * divisions) * sizeof(Vertex), spVertices, GL_STATIC_DRAW);
 
+	glBufferData(GL_ARRAY_BUFFER, size * sizeof(Vertex), sphereVerts, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, (indexCount * sizeof(unsigned int)), sphereIndices, GL_STATIC_DRAW);
+	
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
 
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(unsigned int), auiIndices, GL_STATIC_DRAW);
-
 	glBindVertexArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	//glDeleteVertexArrays(1, &m_VAO);
-	glDeleteBuffers(1, &m_VBO);
-	glDeleteBuffers(1, &m_IBO);
-	
-	//delete[] aoVertices;
-	//delete[] spVertices;
-	//delete[] auiIndices;
 }
 
 void Renderer::drawSphere()
@@ -472,6 +476,5 @@ void Renderer::drawSphere()
 	glEnable(GL_PRIMITIVE_RESTART);
 	glPrimitiveRestartIndex(0xFFFF);
 	glBindVertexArray(m_VAO);
-	glDrawElements(GL_TRIANGLE_FAN, indexCount, GL_UNSIGNED_INT, 0);
-	glPointSize(4.0f);
+	glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
 }
