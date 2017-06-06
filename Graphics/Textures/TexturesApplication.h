@@ -40,7 +40,7 @@ private:
 
 	unsigned int m_programID;
 
-	unsigned int m_VAO, m_VBO, m_IBO, m_Textures;
+	unsigned int m_VAO, m_VBO, m_IBO, m_Textures, m_NormalMap;
 
 	float previousTime, currentTime, deltaTime, m_time;
 	float PI = glm::pi<float>();

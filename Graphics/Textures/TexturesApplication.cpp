@@ -40,14 +40,16 @@ Textures::Textures()
 bool Textures::startup()
 {
 	int imageWidth = 0, imageHeight = 0, imageFormat = 0;
-	unsigned char* data = stbi_load("./data/textures/crate.png", &imageWidth, &imageHeight, &imageFormat, STBI_default);
+	unsigned char* data;		data = stbi_load("./data/textures/crate.png", &imageWidth, &imageHeight, &imageFormat, STBI_default);
 	glGenTextures(1, &m_Textures);
 
 	glBindTexture(GL_TEXTURE_2D, m_Textures);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -130,7 +132,6 @@ void Textures::draw()
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_Textures);
-	
 	loc = glGetUniformLocation(m_programID, "diffuse");
 	glUniform1i(loc, 0);
 
@@ -175,12 +176,12 @@ std::string Textures::ReadIn(std::string fileName)
 
 void Textures::generateTexturePlane()
 {
-
 	float vertexData[] = { 
-			-5, 0, 5, 1, 0, 1,
-			5, 0, 5, 1, 1, 1,
-			5, 0, -5, 1, 1, 0,
-			-5, 0, -5, 1, 0, 0,
+			//Position, TexCoord, Colour
+			-5, 0, 5, 1, 0, 1, 1, 1, 1,
+			5, 0, 5, 1, 2, 1, 1, 0, 0,
+			5, 0, -5, 1, 2, 0, 0, 1, 0,
+			-5, 0, -5, 1, 0, 0, 0, 0, 1,
 	};
 
 	unsigned int indexData[] = { 
@@ -195,16 +196,19 @@ void Textures::generateTexturePlane()
 	glGenBuffers(1, &m_IBO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, &vertexData, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 9 * 4, &vertexData, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, &indexData, GL_STATIC_DRAW);
 	
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
-
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, ((char*)0) + 16);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 9, (void*)0);
+
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 9, (void*)(4 * sizeof(float)));
+
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
