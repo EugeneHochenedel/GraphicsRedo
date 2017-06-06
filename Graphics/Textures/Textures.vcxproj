@@ -133,6 +133,10 @@
     <ClInclude Include="src\gl_core_4_4.h" />
     <ClInclude Include="TexturesApplication.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="tfsSource.frag" />
+    <None Include="tvsSource.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

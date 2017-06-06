@@ -12,7 +12,6 @@
 #include <string>
 #include <fstream>
 #include "src\Camera.h"
-#include <vector>
 
 class Application
 {
@@ -31,8 +30,9 @@ public:
 	bool update() override;
 	void draw() override;
 	void shutdown() override;
-
+	
 	std::string ReadIn(std::string);
+	void generateTexturePlane();
 
 private:
 	GLFWwindow* screen;
