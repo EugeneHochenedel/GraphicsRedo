@@ -40,12 +40,15 @@ Textures::Textures()
 bool Textures::startup()
 {
 	int imageWidth = 0, imageHeight = 0, imageFormat = 0;
-	unsigned char* data;		data = stbi_load("./data/textures/crate.png", &imageWidth, &imageHeight, &imageFormat, STBI_default);
+	unsigned char* data;
+	
+	data = stbi_load("./data/textures/crate.png", &imageWidth, &imageHeight, &imageFormat, STBI_default);
+
 	glGenTextures(1, &m_Textures);
 
 	glBindTexture(GL_TEXTURE_2D, m_Textures);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -55,50 +58,25 @@ bool Textures::startup()
 
 	stbi_image_free(data);
 
-	const char* vsSource;
-	std::string vertShader = ReadIn("tvsSource.vert");
-	vsSource = vertShader.c_str();
+	/*data = stbi_load("./data/textures/rock_normal.tga", &imageWidth, &imageHeight, &imageFormat, STBI_default);
 
-	const char* fsSource;
-	std::string fragShader = ReadIn("tfsSource.frag");
-	fsSource = fragShader.c_str();
+	glGenTextures(1, &m_NormalMap);
 
-	int success = GL_FALSE;
+	glBindTexture(GL_TEXTURE_2D, m_NormalMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 
-	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, (const char**)&vsSource, 0);
-	glCompileShader(vertexShader);
-	
-	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, (const char**)&fsSource, 0);
-	glCompileShader(fragmentShader);
-	
-	m_programID = glCreateProgram();
-	glAttachShader(m_programID, vertexShader);
-	glAttachShader(m_programID, fragmentShader);
-	glLinkProgram(m_programID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-	glGetProgramiv(m_programID, GL_LINK_STATUS, &success);
-	if (success == GL_FALSE)
-	{
-		int infoLogLength = 0;
-		glGetProgramiv(m_programID, GL_INFO_LOG_LENGTH, &infoLogLength);
-		char* infoLog = new char[infoLogLength];
+	glBindTexture(GL_TEXTURE_2D, 0);
 
-		glGetProgramInfoLog(m_programID, infoLogLength, 0, infoLog);
-		printf("Error: Failed to link shader program!\n");
-		printf("%s\n", infoLog);
-		delete[] infoLog;
+	stbi_image_free(data);*/
 
-		glfwDestroyWindow(screen);
-		glfwTerminate();
-		return false;
-	}
 
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	linkShaders("tvsSource.vert", "tfsSource.frag");
 
-	generateTexturePlane();
+	generateBasicTexturePlane();
+	//generateAdvanceTexturePlane();
 
 	return true;
 }
@@ -132,8 +110,19 @@ void Textures::draw()
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_Textures);
+
+	/*glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_NormalMap);*/
+
 	loc = glGetUniformLocation(m_programID, "diffuse");
 	glUniform1i(loc, 0);
+
+	/*loc = glGetUniformLocation(m_programID, "normal");
+	glUniform1i(loc, 1);
+
+	glm::vec3 light(sin(glfwGetTime()), 1, cos(glfwGetTime()));
+	loc = glGetUniformLocation(m_programID, "LightDir");
+	glUniform3f(loc, light.x, light.y, light.z);*/
 
 	glBindVertexArray(m_VAO);
 	glDrawElements(GL_TRIANGLE_STRIP, 6, GL_UNSIGNED_INT, nullptr);
@@ -174,7 +163,53 @@ std::string Textures::ReadIn(std::string fileName)
 	return container;
 }
 
-void Textures::generateTexturePlane()
+bool Textures::linkShaders(std::string vs, std::string fs)
+{
+	std::string vertShader = ReadIn(vs);
+	const char* vsSource = vertShader.c_str();
+
+	std::string fragShader = ReadIn(fs);
+	const char* fsSource = fragShader.c_str();
+
+	int success = GL_FALSE;
+
+	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, (const char**)&vsSource, 0);
+	glCompileShader(vertexShader);
+
+	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, (const char**)&fsSource, 0);
+	glCompileShader(fragmentShader);
+
+	m_programID = glCreateProgram();
+	glAttachShader(m_programID, vertexShader);
+	glAttachShader(m_programID, fragmentShader);
+	glLinkProgram(m_programID);
+
+	glGetProgramiv(m_programID, GL_LINK_STATUS, &success);
+	if (success == GL_FALSE)
+	{
+		int infoLogLength = 0;
+		glGetProgramiv(m_programID, GL_INFO_LOG_LENGTH, &infoLogLength);
+		char* infoLog = new char[infoLogLength];
+
+		glGetProgramInfoLog(m_programID, infoLogLength, 0, infoLog);
+		printf("Error: Failed to link shader program!\n");
+		printf("%s\n", infoLog);
+		delete[] infoLog;
+
+		glfwDestroyWindow(screen);
+		glfwTerminate();
+		return false;
+	}
+	
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	return true;
+}
+
+void Textures::generateBasicTexturePlane()
 {
 	float vertexData[] = { 
 			//Position, TexCoord, Colour
@@ -209,6 +244,50 @@ void Textures::generateTexturePlane()
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 9, (void*)(4 * sizeof(float)));
 
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void Textures::generateAdvanceTexturePlane()
+{
+	Vertex verts[] = {
+		//position, texturecoords, normal, tangent
+		{glm::vec4(-5, 0, 5, 1), glm::vec2(0, 1), glm::vec4(0, 1, 0, 0), glm::vec4(1, 0, 0, 0)},
+		{glm::vec4(5, 0, 5, 1), glm::vec2(2, 1), glm::vec4(0, 1, 0, 0), glm::vec4(1, 0, 0, 0)},
+		{glm::vec4(5, 0, -5, 1), glm::vec2(2, 0), glm::vec4(0, 1, 0, 0), glm::vec4(1, 0, 0, 0)},
+		{glm::vec4(-5, 0, -5, 1), glm::vec2(0, 0), glm::vec4(0, 1, 0, 0), glm::vec4(1, 0, 0, 0)},
+	};
+
+	unsigned int indexData[] = {
+		0, 1, 2,
+		0, 2, 3,
+	};
+
+	glGenVertexArrays(1, &m_VAO);
+	glBindVertexArray(m_VAO);
+
+	glGenBuffers(1, &m_VBO);
+	glGenBuffers(1, &m_IBO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * 4, &verts, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, &indexData, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex) * 9, (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), ((char*)0) + 48);
+
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), ((char*)0) + 16);
+
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), ((char*)0) + 32);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);

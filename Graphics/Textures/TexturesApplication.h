@@ -13,6 +13,14 @@
 #include <fstream>
 #include "src\Camera.h"
 
+struct Vertex
+{
+	glm::vec4 position;
+	glm::vec2 textureCoords;
+	glm::vec4 normal;
+	glm::vec4 tangent;
+};
+
 class Application
 {
 public:
@@ -32,7 +40,9 @@ public:
 	void shutdown() override;
 	
 	std::string ReadIn(std::string);
-	void generateTexturePlane();
+	bool linkShaders(std::string, std::string);
+	void generateBasicTexturePlane();
+	void generateAdvanceTexturePlane();
 
 private:
 	GLFWwindow* screen;

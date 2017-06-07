@@ -48,5 +48,7 @@
   <ItemGroup>
     <None Include="tfsSource.frag" />
     <None Include="tvsSource.vert" />
+    <None Include="vsAdvance.vert" />
+    <None Include="fsAdvance.frag" />
   </ItemGroup>
 </Project>
